@@ -7,6 +7,7 @@ variable subnet_cidr_block {}
 variable avail_zone {}
 variable env_prefix {}
 variable my_ip {}
+variable instance_type {}
 
 
 resource "aws_vpc" "myapp_vpc" {
@@ -85,5 +86,38 @@ resource "aws_default_security_group" "default-sg" {
 
   tags = {
     Name = "${var.env_prefix}-default-sg"
+  }
+}
+
+data "aws_ami" "latest-amazon-linux-image" {
+  most_recent = true
+  owners = ["amazon"]
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023*x86_64"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+output "aws_ami_id" {
+  value = data.aws_ami.latest-amazon-linux-image.id
+}
+
+resource "aws_instance" "myapp_server" {
+  ami = data.aws_ami.latest-amazon-linux-image.id
+  instance_type = var.instance_type
+
+  subnet_id = aws_subnet.myapp-subnet-1.id
+  security_groups = [aws_default_security_group.default-sg.id]
+  availability_zone = var.avail_zone
+
+  associate_public_ip_address = true
+
+  key_name = "server-key-pair"
+  tags = {
+    Name = "${var.env_prefix}-server" 
   }
 }
