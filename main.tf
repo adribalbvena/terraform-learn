@@ -125,9 +125,25 @@ resource "aws_instance" "myapp_server" {
 
   key_name = aws_key_pair.ssh-key.key_name
 
-  user_data = file("entry-script.sh")
+  # user_data = file("entry-script.sh")
 
   user_data_replace_on_change = true
+
+  connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      agent       = true
+      host        = self.public_ip
+  }
+  
+  provisioner "file" {
+    source = "entry-script.sh"
+    destination = "/home/ec2-user/entry-script-ec2.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = ["/home/ec2-user/entry-script-ec2.sh"]
+  }
 
   tags = {
     Name = "${var.env_prefix}-server" 
