@@ -135,14 +135,18 @@ resource "aws_instance" "myapp_server" {
       agent       = true
       host        = self.public_ip
   }
-  
+
   provisioner "file" {
     source = "entry-script.sh"
     destination = "/home/ec2-user/entry-script-ec2.sh"
   }
 
   provisioner "remote-exec" {
-    inline = ["/home/ec2-user/entry-script-ec2.sh"]
+    inline = ["entry-script.sh"]
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${self.public_ip} > server_public_ip.txt"
   }
 
   tags = {
